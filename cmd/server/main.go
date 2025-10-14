@@ -22,16 +22,15 @@ func main() {
 
 	router := chi.NewRouter()
 
-	router.Get("opti-collab/ws", handlers.Ws_handler)
+	router.Get("/opti-collab/ws", handlers.Ws_handler)
 
-	staticHtmlPath := "/home/Jack_145/OptiCollab/ui/templates" //path which html files live
-	router.Handle("/opti-collab/*", http.StripPrefix("/opti-collab/", http.FileServer(http.Dir(staticHtmlPath))))
+	router.Get("/opti-collab", handlers.ServeIndex)
 
-	staticFilePath := "/home/Jack_145/OptiCollab/ui/static" //path which the css,js files lives
-	router.Handle("/opti-collab/static*", http.StripPrefix("/opti-collab/static", http.FileServer(http.Dir(staticFilePath))))
+	staticPath := "/home/Jack_145/OptiCollab/ui/static" //path which the css,js files lives
+	router.Handle("/opti-collab/static*", http.StripPrefix("/opti-collab/static", http.FileServer(http.Dir(staticPath))))
 
-	log.Println("OptiCollab server running on port", port)
-	err = http.ListenAndServe("0.0.0.0:"+port, nil)
+	fmt.Println("server running on " + port + "...")
+	err = http.ListenAndServe("0.0.0.0:"+port, router)
 	if err != nil {
 		fmt.Println("error while start the go server - ", err)
 	}

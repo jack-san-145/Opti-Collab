@@ -1,6 +1,6 @@
 const roomId = prompt("Enter Room ID") || "default";
 
-const ws = new WebSocket(`ws://localhost:8989/ws?room=${roomId}`);
+const ws = new WebSocket(`ws://localhost:8989/opti-collab/ws?room=${roomId}`);
 
 ws.onopen = () => {
   console.log("Connected to OptiCollab WebSocket");
