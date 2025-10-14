@@ -24,10 +24,10 @@ func main() {
 
 	router.Get("/opti-collab/ws", handlers.Ws_handler)
 
-	router.Get("/opti-collab", handlers.ServeIndex)
+	router.Get("/", handlers.ServeIndex)
+	router.Post("/opti-collab/run-code", handlers.RunCode_handler)
 
-	staticPath := "/home/Jack_145/OptiCollab/ui/static" //path which the css,js files lives
-	router.Handle("/opti-collab/static*", http.StripPrefix("/opti-collab/static", http.FileServer(http.Dir(staticPath))))
+	router.Handle("/opti-collab/static/*", http.StripPrefix("/opti-collab/static/", http.FileServer(http.Dir("../../ui/static")))) //for js files
 
 	fmt.Println("server running on " + port + "...")
 	err = http.ListenAndServe("0.0.0.0:"+port, router)

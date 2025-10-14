@@ -1,22 +1,28 @@
-const roomId = prompt("Enter Room ID") || "default";
+require.config({ paths: { 'vs': 'https://cdn.jsdelivr.net/npm/monaco-editor@0.38.0/min/vs' }});
 
-const ws = new WebSocket(`ws://localhost:8989/opti-collab/ws?room=${roomId}`);
+require(['vs/editor/editor.main'], function () {
+  const editor = monaco.editor.create(document.getElementById('editor'), {
+    value: `// Start coding here...\n`,
+    language: 'javascript',
+    theme: 'vs-dark',
+    automaticLayout: true
+  });
 
-ws.onopen = () => {
-  console.log("Connected to OptiCollab WebSocket");
-};
+  // Connect WebSocket
+  const roomId = prompt("Enter Room ID") || "default";
+  const ws = new WebSocket(`ws://localhost:8989/opti-collab/ws?room=${roomId}`);
 
-ws.onmessage = (event) => {
-  const data = event.data;
-  // Update code editor content (example for a textarea)
-  const editor = document.getElementById("editor");
-  if (editor.value !== data) {
-    editor.value = data;
-  }
-};
+  ws.onopen = () => console.log("Connected to OptiCollab WebSocket");
 
-// Send changes to server
-const editor = document.getElementById("editor");
-editor.addEventListener("input", (e) => {
-  ws.send(editor.value);
+  ws.onmessage = (event) => {
+    const data = event.data;
+    if (editor.getValue() !== data) {
+      editor.setValue(data);
+    }
+  };
+
+  // Send changes on every edit
+  editor.onDidChangeModelContent((event) => {
+    ws.send(editor.getValue());
+  });
 });

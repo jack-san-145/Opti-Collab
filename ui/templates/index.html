@@ -1,14 +1,24 @@
+<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>OptiCollab</title>
+  <!-- Monaco loader -->
+  <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.38.0/min/vs/loader.js"></script>
+  <style>
+    #editor {
+      width: 80%;
+      height: 500px;
+      border: 1px solid #ccc;
+    }
+  </style>
 </head>
 <body>
   <h1>OptiCollab Editor</h1>
-  <textarea id="editor" cols="80" rows="20"></textarea>
+  <div id="editor"></div>
 
-  <script src="../static/js/index.js"></script>
+  <script src="/opti-collab/static/js/index.js"></script>
 </body>
 </html>
