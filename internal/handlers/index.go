@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
+	"opti-collab/internal/services"
 	"opti-collab/models"
 )
 
@@ -29,5 +30,10 @@ func RunCode_handler(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("error while decode the given code - ", err)
 		return
 	}
-	fmt.Printf("given code - \n %s - ",input_code.Code)
+	fmt.Printf("given code - \n %s - ", input_code.Code)
+	response, err := services.AnalyzeCode(input_code.Code, input_code.Language)
+	if err != nil {
+		fmt.Println("error while analyze the code - ", err.Error())
+	}
+	WriteJSON(w, r, response)
 }

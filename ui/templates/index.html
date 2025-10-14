@@ -1,24 +1,71 @@
-<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>OptiCollab</title>
+
   <!-- Monaco loader -->
   <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.38.0/min/vs/loader.js"></script>
+
   <style>
+    body {
+      font-family: sans-serif;
+      background: #121212;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+
+    #language-select {
+      margin-bottom: 10px;
+      padding: 6px 12px;
+      border-radius: 6px;
+    }
+
     #editor {
-      width: 80%;
-      height: 500px;
-      border: 1px solid #ccc;
+      width: 90%;
+      height: 600px;
+      border: 1px solid #333;
+      border-radius: 8px;
+    }
+
+    #run-btn {
+      margin-top: 20px;
+      padding: 10px 16px;
+      border: none;
+      background: #4CAF50;
+      color: white;
+      font-size: 16px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    #run-btn:hover {
+      background: #45a049;
     }
   </style>
 </head>
+
 <body>
-  <h1>OptiCollab Editor</h1>
+  <h1>OptiCollab Editor 🧠</h1>
+
+  <label for="language-select">Language:</label>
+  <select id="language-select">
+    <option value="javascript">JavaScript</option>
+    <option value="python">Python</option>
+    <option value="go">Go</option>
+    <option value="html">HTML</option>
+    <option value="cpp">C++</option>
+  </select>
+
   <div id="editor"></div>
 
+  <button id="run-btn">Run Code</button>
+
+  <!-- Load your JS here -->
   <script src="/opti-collab/static/js/index.js"></script>
 </body>
 </html>
