@@ -1,0 +1,10 @@
+.env
+.DS_Store
+Thumbs.db
+
+*.exe
+*.out
+cmd/server/opti-collab
+cmd/server/*.out
+cmd/server/*.test
+
