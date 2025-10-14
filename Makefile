@@ -2,7 +2,7 @@
 #to build and run the application
 
 build:
-	cd cmd/server && go build -o opti-collab .
+	cd cmd/server && go build -o opti-collab . && ./opti-collab
 
 run: 
 	cd cmd/server && ./opti-collab

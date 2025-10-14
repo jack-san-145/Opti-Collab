@@ -1,7 +1,7 @@
 .env
 .DS_Store
 Thumbs.db
-
+opti-collab
 *.exe
 *.out
 cmd/server/opti-collab
