@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
-	"opti-collab/internal/services"
+	"opti-collab/docker"
+	// "opti-collab/internal/services"
 	"opti-collab/models"
 )
 
@@ -31,9 +32,10 @@ func RunCode_handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	fmt.Printf("given code - \n %s - ", input_code.Code)
-	response, err := services.AnalyzeCode(input_code.Code, input_code.Language)
+	// response, err := services.AnalyzeCode(input_code.Code, input_code.Language)
+	response, err := docker.Run_code(input_code.Language, input_code.Code)
 	if err != nil {
-		fmt.Println("error while analyze the code - ", err.Error())
+		fmt.Println("error while run the code on docker - ", err.Error())
 	}
 	WriteJSON(w, r, response)
 }

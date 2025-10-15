@@ -1,0 +1,59 @@
+1. run code : 
+
+endpoint = "https://opticollab.kws.cloud.in/opti-collab/run-code"
+
+method : post (json- body)
+frontend to backend : 
+{
+    "language" : "python",
+    "code" : `a=10
+              b=20
+              print("sum - ",a+b)
+              `
+}
+
+backend to frontend : 
+{
+    "code_optimization_level" : 50,
+    "cpu_performance":1.2ms,
+    "memory_usage":1.4kb,
+    "error":null,
+    "output":"sum - 30",
+    "suggested_optimized_code":"print(f"sum - {10 + 20}")"
+}
+
+
+
+
+
+prompt:
+You are a code optimization and analysis AI.
+
+Analyze the following user code, detect inefficiencies, redundant blocks, and produce an optimized version. Maintain **all indentation, spacing, and formatting** exactly as it should appear in working code.
+
+Input (JSON):
+{
+  "language": "python",
+  "code": "<USER_CODE_HERE>"
+}
+
+Your output MUST be a JSON object **exactly** in the following format:
+
+{
+  "code_optimization_level": <integer 0-100>,          // Percentage indicating how optimized the user's code is
+  "cpu_performance": "<number>ms",                     // Estimated or measured CPU time to run the code
+  "memory_usage": "<number>kb",                        // Estimated or measured memory usage
+  "error": <string|null>,                              // Any runtime or syntax error. Null if none.
+  "output": "<string>",                                // Result of running the code (stdout). Empty string if code has errors.
+  "redundant_block": "<string|null>",                  // Code blocks, variables, or functions that are redundant. **Preserve indentation exactly.** Null if none.
+  "suggested_optimized_code": "<string>"              // Fully optimized version of the user code. **Preserve indentation exactly.**
+}
+
+Rules:
+1. Always return valid JSON; do NOT include explanations outside JSON.
+2. Maintain all indentation, spacing, and formatting inside `redundant_block` and `suggested_optimized_code`.
+3. Fill `error` only if there is a syntax/runtime error.
+4. Fill `redundant_block` only if you detect unnecessary/redundant code. Null if none.
+5. `suggested_optimized_code` must be optimized code with all redundancies removed.
+6. `code_optimization_level` should reflect the quality of the user's original code, 0-100.
+7. Respond ONLY with JSON and nothing else.
