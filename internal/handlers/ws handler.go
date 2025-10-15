@@ -3,23 +3,22 @@ package handlers
 import (
 	"fmt"
 	"net/http"
+	"sync"
 
 	"github.com/gorilla/websocket"
 )
 
-// Upgrade HTTP connection to WebSocket
+var rooms = make(map[string][]*websocket.Conn)
+
 var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool {
 		return true // allow requests from all the origins
 	},
 }
 
-// Map of roomID -> list of connections
-var rooms = make(map[string][]*websocket.Conn)
+var roomsMutex = sync.Mutex{}
 
 func Ws_handler(w http.ResponseWriter, r *http.Request) {
-
-	// Upgrade HTTP request to WebSocket
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		fmt.Println("WebSocket upgrade error:", err)
@@ -27,36 +26,53 @@ func Ws_handler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer conn.Close()
 
-	// Read roomID from query param
-	roomID := r.URL.Query().Get("room")
+	roomID := r.URL.Query().Get("room_id")
 	if roomID == "" {
-		roomID = "default"
+		WriteJSON(w, r, map[string]bool{"created": false})
+		return
+	} else if _, exists := rooms[roomID]; !exists {
+		WriteJSON(w, r, map[string]bool{"created": false})
+		return
 	}
 
-	// Add connection to room
+	roomsMutex.Lock()
 	rooms[roomID] = append(rooms[roomID], conn)
 	fmt.Printf("New connection in room %s. Total: %d\n", roomID, len(rooms[roomID]))
+	roomsMutex.Unlock()
 
-	// Listen for messages from this client
+	// Start listening for messages
+	go listen_room_msg(roomID, conn)
+}
+
+func listen_room_msg(roomID string, conn *websocket.Conn) {
+	defer conn.Close()
 	for {
 		_, msg, err := conn.ReadMessage()
 		if err != nil {
-			fmt.Println("Read error:", err)
+			fmt.Println("Read error - ", err)
+			remove_connection(roomID, conn)
 			break
 		}
 
-		// Broadcast to all clients in the same room
-		for _, c := range rooms[roomID] {
+		// Broadcast to all clients in the same room safely
+		roomsMutex.Lock()
+		conns := rooms[roomID]
+		for _, c := range conns {
 			if c != conn {
-				err := c.WriteMessage(websocket.TextMessage, msg)
-				if err != nil {
-					fmt.Println("Write error:", err)
+				if err := c.WriteMessage(websocket.TextMessage, msg); err != nil {
+					fmt.Println("Write error - ", err)
+					remove_connection(roomID, c)
 				}
 			}
 		}
+		roomsMutex.Unlock()
 	}
+}
 
-	// Remove connection on disconnect
+func remove_connection(roomID string, conn *websocket.Conn) {
+	roomsMutex.Lock()
+	defer roomsMutex.Unlock()
+
 	conns := rooms[roomID]
 	for i, c := range conns {
 		if c == conn {
@@ -66,4 +82,30 @@ func Ws_handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Printf("Connection left room %s. Total: %d\n", roomID, len(rooms[roomID]))
+}
+
+func GroupCreationHandler(w http.ResponseWriter, r *http.Request) {
+	roomID := r.URL.Query().Get("room_id")
+	if roomID == "" {
+		WriteJSON(w, r, map[string]any{
+			"created": false,
+			"error":   "room already exists",
+		})
+		return
+	}
+
+	roomsMutex.Lock()
+	defer roomsMutex.Unlock()
+
+	if _, exists := rooms[roomID]; exists {
+		WriteJSON(w, r, map[string]any{
+			"created": false,
+			"error":   "room already exists",
+		})
+		return
+	}
+
+	rooms[roomID] = []*websocket.Conn{}
+	fmt.Printf("Room %s created\n", roomID)
+	WriteJSON(w, r, map[string]bool{"created": true})
 }

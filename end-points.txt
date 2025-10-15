@@ -1,0 +1,22 @@
+1. run code : 
+
+endpoint = "http://localhost:8989/opti-collab/run-code"
+
+frontend to backend : 
+{
+    "language" : "python",
+    "code" : `a=10
+              b=20
+              print("sum - ",a+b)
+              `
+}
+
+backend to frontend : 
+{
+    "code_optimization_level" : 50,
+    "cpu_performance":1.2ms,
+    "memory_usage":1.4kb,
+    "error":null,
+    "output":"hello world",
+    "suggested_optimized_code":"print(f"sum - {10 + 20}")"
+}
