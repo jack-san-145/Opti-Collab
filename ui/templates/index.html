@@ -494,11 +494,12 @@
   <div class="app">
     <header>
       <div style="display:flex;align-items:center;gap:12px">
-        <div class="title">⚡ OptiCollab Editor</div>
+        <div class="title">⚡ OptiCollab</div>
       </div>
       <div class="controls">
+        
+        <button class="btn" id="joinRoomBtn">Collabrate</button>
         <button class="btn" id="createRoomBtn">Create Room</button>
-        <button class="btn" id="joinRoomBtn">Join Room</button>
       </div>
     </header>
 
@@ -571,6 +572,13 @@
     // API endpoints
     const RUN_CODE_ENDPOINT = "http://localhost:8989/opti-collab/run-code";
     const OPTIMIZE_CODE_ENDPOINT = "http://localhost:8989/opti-collab/optimise-code";
+    const CREATE_ROOM_ENDPOINT = "http://localhost:8989/opti-collab/create-room";
+    const WS_ENDPOINT = "ws://localhost:8989/opti-collab/ws";
+
+    // WebSocket connection
+    let ws = null;
+    let suppress = false;
+    let currentRoom = null;
 
     // UI elements
     const tabs = document.querySelectorAll('.tab');
@@ -617,11 +625,17 @@
             language: 'python',
             theme: 'vs-dark',
             automaticLayout: true,
-            fontSize: 20
-            ,
+            fontSize: 20,
             fontFamily: 'JetBrains Mono, monospace',
             lineHeight: 22,
             padding: { top: 16 }
+          });
+
+          // Listen for editor changes and send to WebSocket
+          window.editor.onDidChangeModelContent(() => {
+            if (!suppress && ws && ws.readyState === WebSocket.OPEN) {
+              ws.send(window.editor.getValue());
+            }
           });
         });
       };
@@ -646,29 +660,84 @@
       });
     });
 
+    // WebSocket connection function
+    function connectWebSocket(roomId) {
+      if (ws) {
+        ws.close();
+      }
+
+      ws = new WebSocket(`${WS_ENDPOINT}?room_id=${encodeURIComponent(roomId)}`);
+
+      ws.onopen = () => {
+        console.log('✅ Connected to WebSocket room:', roomId);
+        roomInfo.textContent = '🌐 Room: ' + roomId + ' ✅ Connected';
+        roomInfo.style.borderColor = 'var(--success)';
+      };
+
+      ws.onmessage = (event) => {
+        const data = event.data;
+        if (window.editor && window.editor.getValue() !== data) {
+          suppress = true;
+          window.editor.setValue(data);
+          suppress = false;
+        }
+      };
+
+      ws.onerror = (error) => {
+        console.error('WebSocket error:', error);
+        roomInfo.textContent = '🌐 Room: ' + roomId + ' ❌ Connection Error';
+        roomInfo.style.borderColor = 'var(--error)';
+      };
+
+      ws.onclose = () => {
+        console.log('WebSocket connection closed');
+        roomInfo.textContent = '🌐 Room: ' + roomId + ' (Disconnected)';
+        roomInfo.style.borderColor = 'var(--warning)';
+        ws = null;
+      };
+    }
+
     // Room creation and joining
     document.getElementById('createRoomBtn').addEventListener('click', () => {
       modalTitle.textContent = '🚀 Create Room';
       modalActionBtn.textContent = 'Create Room';
       roomModal.style.display = 'flex';
-      modalActionBtn.onclick = () => {
-        if (roomIdInput.value.trim()) {
-          roomInfo.textContent = '🌐 Room: ' + roomIdInput.value;
-          roomModal.style.display = 'none';
-          roomIdInput.value = '';
+      modalActionBtn.onclick = async () => {
+        const roomId = roomIdInput.value.trim();
+        if (roomId) {
+          try {
+            const response = await fetch(`${CREATE_ROOM_ENDPOINT}?room_id=${encodeURIComponent(roomId)}`);
+            const data = await response.json();
+            
+            if (data.created) {
+              currentRoom = roomId;
+              roomInfo.textContent = '🌐 Room: ' + roomId + ' (Created)';
+              roomModal.style.display = 'none';
+              roomIdInput.value = '';
+              connectWebSocket(roomId);
+            } else {
+              alert(data.error || 'Failed to create room');
+            }
+          } catch (error) {
+            alert('Error creating room: ' + error.message);
+            console.error('Error creating room:', error);
+          }
         }
       };
     });
 
     document.getElementById('joinRoomBtn').addEventListener('click', () => {
-      modalTitle.textContent = '🔗 Join Room';
+      modalTitle.textContent = '🔗 Collabrate with roomates';
       modalActionBtn.textContent = 'Join Room';
       roomModal.style.display = 'flex';
       modalActionBtn.onclick = () => {
-        if (roomIdInput.value.trim()) {
-          roomInfo.textContent = '🌐 Room: ' + roomIdInput.value;
+        const roomId = roomIdInput.value.trim();
+        if (roomId) {
+          currentRoom = roomId;
+          roomInfo.textContent = '🌐 Room: ' + roomId + ' (Joining...)';
           roomModal.style.display = 'none';
           roomIdInput.value = '';
+          connectWebSocket(roomId);
         }
       };
     });

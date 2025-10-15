@@ -54,3 +54,32 @@ backend to frontend :
 }
 
 
+
+
+3.create room :
+endpoint = "http://localhost:8989/opti-collab/create-room"
+
+method : get(query parameter)
+
+
+backend to frontend : 
+{
+    "created": true 
+}
+
+or 
+
+{
+    "created": false,
+    "error": "room already exists"
+}
+
+
+
+4. join room 
+
+endpoint = "ws://localhost:8989/opti-collab/ws?room_id=room-jack"
+
+method : ws(query parameter)
+
+

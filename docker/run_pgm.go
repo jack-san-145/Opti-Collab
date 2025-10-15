@@ -3,6 +3,7 @@ package docker
 import (
 	"fmt"
 	"os/exec"
+	"strings"
 )
 
 func Run_code(language, code string) (string, error) {
@@ -37,23 +38,28 @@ func Run_code(language, code string) (string, error) {
 		return "", fmt.Errorf("unsupported language: %s", language)
 	}
 
-	// Create the bash script: write code to file, then execute it
-	cmdStr := fmt.Sprintf(`docker exec -i %s bash -c $'cat << "EOF" > %s
+	// Escape single quotes to avoid breaking the shell
+	safeCode := strings.ReplaceAll(code, `'`, `'"'"'`)
+
+	// Use safe shell heredoc with literal quoting
+	cmdStr := fmt.Sprintf(
+		`docker exec -i %s sh -c 'cat > %s <<'EOF'
 %s
 EOF
-%s'`, containerName, fileName, code, runCmd)
+%s'`,
+		containerName, fileName, safeCode, runCmd,
+	)
 
+	// Execute the command
 	cmd := exec.Command("bash", "-c", cmdStr)
-	output, err := cmd.CombinedOutput() // captures both stdout + stderr
+	output, err := cmd.CombinedOutput() // Captures both stdout + stderr
 
 	result := string(output)
 
-	// Log everything (optional for debugging)
 	fmt.Printf("\n[RunCode] Language: %s\nCommand: %s\nOutput:\n%s\n", language, cmdStr, result)
 
-	// Always return combined output; if error occurs, return it as well
+	// Append error if command failed (non-zero exit)
 	if err != nil {
-		// Append the error message if execution failed (e.g. non-zero exit)
 		result += fmt.Sprintf("\n[error] %v", err)
 	}
 
