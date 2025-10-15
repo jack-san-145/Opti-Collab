@@ -57,7 +57,10 @@ func listen_room_msg(roomID string, conn *websocket.Conn) {
 		// Broadcast to all clients in the same room safely
 		roomsMutex.Lock()
 		conns := rooms[roomID]
-		for _, c := range conns {
+		conn_copy:=conns
+		roomsMutex.Unlock()
+		
+		for _, c := range conn_copy {
 			if c != conn {
 				if err := c.WriteMessage(websocket.TextMessage, msg); err != nil {
 					fmt.Println("Write error - ", err)
@@ -65,7 +68,7 @@ func listen_room_msg(roomID string, conn *websocket.Conn) {
 				}
 			}
 		}
-		roomsMutex.Unlock()
+		
 	}
 }
 
@@ -82,30 +85,4 @@ func remove_connection(roomID string, conn *websocket.Conn) {
 	}
 
 	fmt.Printf("Connection left room %s. Total: %d\n", roomID, len(rooms[roomID]))
-}
-
-func GroupCreationHandler(w http.ResponseWriter, r *http.Request) {
-	roomID := r.URL.Query().Get("room_id")
-	if roomID == "" {
-		WriteJSON(w, r, map[string]any{
-			"created": false,
-			"error":   "room already exists",
-		})
-		return
-	}
-
-	roomsMutex.Lock()
-	defer roomsMutex.Unlock()
-
-	if _, exists := rooms[roomID]; exists {
-		WriteJSON(w, r, map[string]any{
-			"created": false,
-			"error":   "room already exists",
-		})
-		return
-	}
-
-	rooms[roomID] = []*websocket.Conn{}
-	fmt.Printf("Room %s created\n", roomID)
-	WriteJSON(w, r, map[string]bool{"created": true})
 }

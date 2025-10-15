@@ -26,6 +26,7 @@ func main() {
 
 	router.Get("/", handlers.ServeIndex)
 	router.Post("/opti-collab/run-code", handlers.RunCode_handler)
+	router.Get("/opti-collab/create-room", handlers.GroupCreationHandler)
 
 	router.Handle("/opti-collab/static/*", http.StripPrefix("/opti-collab/static/", http.FileServer(http.Dir("../../ui/static")))) //for js files
 
