@@ -102,7 +102,7 @@ func AnalyzeCode(code string, language string) (*models.CodeAnalysisResponse, er
 	// Parse the JSON from Gemini
 	var analysis models.CodeAnalysisResponse
 	if err := json.Unmarshal([]byte(text), &analysis); err != nil {
-		return nil, fmt.Errorf("failed to parse Gemini response as JSON: %v\nRaw response: %s", err, text)
+		return nil, fmt.Errorf("failed to parse response as JSON: %v\nRaw response: %s", err, text)
 	}
 
 	fmt.Println("analysis - ", analysis)

@@ -1,8 +1,8 @@
 package models
 
 type Code struct {
-	Language string
-	Code     string
+	Language string `json:"lang"`
+	Code     string `json:"code"`
 }
 
 type CodeAnalysisResponse struct {

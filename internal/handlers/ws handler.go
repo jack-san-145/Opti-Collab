@@ -19,19 +19,20 @@ var upgrader = websocket.Upgrader{
 var roomsMutex = sync.Mutex{}
 
 func Ws_handler(w http.ResponseWriter, r *http.Request) {
-	conn, err := upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		fmt.Println("WebSocket upgrade error:", err)
-		return
-	}
-	defer conn.Close()
 
 	roomID := r.URL.Query().Get("room_id")
+	fmt.Println("room_id - ", roomID)
 	if roomID == "" {
 		WriteJSON(w, r, map[string]bool{"created": false})
 		return
 	} else if _, exists := rooms[roomID]; !exists {
 		WriteJSON(w, r, map[string]bool{"created": false})
+		return
+	}
+
+	conn, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		fmt.Println("WebSocket upgrade error:", err)
 		return
 	}
 
@@ -57,9 +58,9 @@ func listen_room_msg(roomID string, conn *websocket.Conn) {
 		// Broadcast to all clients in the same room safely
 		roomsMutex.Lock()
 		conns := rooms[roomID]
-		conn_copy:=conns
+		conn_copy := conns
 		roomsMutex.Unlock()
-		
+
 		for _, c := range conn_copy {
 			if c != conn {
 				if err := c.WriteMessage(websocket.TextMessage, msg); err != nil {
@@ -68,7 +69,7 @@ func listen_room_msg(roomID string, conn *websocket.Conn) {
 				}
 			}
 		}
-		
+
 	}
 }
 

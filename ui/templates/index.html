@@ -1,71 +1,823 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>OptiCollab</title>
-
-  <!-- Monaco loader -->
-  <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.38.0/min/vs/loader.js"></script>
-
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>OptiCollab Editor</title>
   <style>
-    body {
-      font-family: sans-serif;
-      background: #121212;
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+    
+    :root{
+      --bg: #0f0f23;
+      --bg-gradient: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 100%);
+      --panel: #1e1e3f;
+      --panel-hover: #252547;
+      --accent: #00d4ff;
+      --accent-glow: rgba(0, 212, 255, 0.3);
+      --accent-secondary: #7c3aed;
+      --text: #e4e4e7;
+      --text-dim: #a1a1aa;
+      --success: #10b981;
+      --error: #ef4444;
+      --warning: #f59e0b;
+      font-family: 'Inter', sans-serif;
+    }
+    
+    *{box-sizing: border-box;}
+    
+    html,body{
+      height:100%;
+      margin:0;
+      background: var(--bg);
+      background: var(--bg-gradient);
+      color:var(--text);
+      overflow-x: hidden;
+    }
+    
+    .app{
+      min-height:100vh;
+      display:flex;
+      flex-direction:column;
+      position: relative;
+    }
+    
+    /* Animated background particles */
+    .app::before {
+      content: '';
+      position: fixed;
+      width: 200%;
+      height: 200%;
+      top: -50%;
+      left: -50%;
+      background: 
+        radial-gradient(circle at 20% 50%, rgba(124, 58, 237, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(0, 212, 255, 0.1) 0%, transparent 50%);
+      animation: drift 20s ease-in-out infinite;
+      pointer-events: none;
+      z-index: 0;
+    }
+    
+    @keyframes drift {
+      0%, 100% { transform: translate(0, 0) rotate(0deg); }
+      33% { transform: translate(30px, -30px) rotate(120deg); }
+      66% { transform: translate(-20px, 20px) rotate(240deg); }
+    }
+    
+    header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:16px 32px;
+      background: rgba(30, 30, 63, 0.8);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      position: relative;
+      z-index: 10;
+      animation: slideDown 0.5s ease-out;
+    }
+    
+    @keyframes slideDown {
+      from { transform: translateY(-100%); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    
+    .title{
+      font-weight:700;
+      font-size:24px;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-secondary) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: glow 3s ease-in-out infinite;
+    }
+    
+    @keyframes glow {
+      0%, 100% { filter: drop-shadow(0 0 8px var(--accent-glow)); }
+      50% { filter: drop-shadow(0 0 16px var(--accent-glow)); }
+    }
+    
+    .controls{
+      display:flex;
+      gap:12px;
+      align-items:center;
+      animation: fadeIn 0.8s ease-out 0.3s both;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    button.btn{
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-secondary) 100%);
       color: white;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 20px;
-    }
-
-    #language-select {
-      margin-bottom: 10px;
-      padding: 6px 12px;
-      border-radius: 6px;
-    }
-
-    #editor {
-      width: 90%;
-      height: 600px;
-      border: 1px solid #333;
-      border-radius: 8px;
-    }
-
-    #run-btn {
-      margin-top: 20px;
-      padding: 10px 16px;
-      border: none;
-      background: #4CAF50;
-      color: white;
-      font-size: 16px;
+      border:none;
+      padding: 10px 20px;
       border-radius: 8px;
       cursor: pointer;
+      font-weight: 600;
+      font-size: 14px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 4px 15px rgba(0, 212, 255, 0.3);
     }
-
-    #run-btn:hover {
-      background: #45a049;
+    
+    button.btn::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.3);
+      transform: translate(-50%, -50%);
+      transition: width 0.6s, height 0.6s;
+    }
+    
+    button.btn:hover::before {
+      width: 300px;
+      height: 300px;
+    }
+    
+    button.btn:hover{
+      transform: translateY(-2px);
+      box-shadow: 0 6px 25px rgba(0, 212, 255, 0.5);
+    }
+    
+    button.btn:active{
+      transform: translateY(0);
+    }
+    
+    main{
+      flex:1;
+      display:flex;
+      padding:24px;
+      gap:24px;
+      position: relative;
+      z-index: 1;
+      animation: fadeIn 0.8s ease-out 0.5s both;
+    }
+    
+    .sidebar{
+      width:280px;
+      background: rgba(30, 30, 63, 0.6);
+      backdrop-filter: blur(10px);
+      border-radius:16px;
+      padding:20px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      display:flex;
+      flex-direction:column;
+      gap:20px;
+      transition: transform 0.3s ease;
+    }
+    
+    .sidebar:hover {
+      transform: translateX(2px);
+    }
+    
+    .center{
+      flex:1;
+      display:flex;
+      flex-direction:column;
+      gap:16px;
+    }
+    
+    .tabs{
+      display:flex;
+      gap:12px;
+      animation: fadeIn 0.8s ease-out 0.6s both;
+    }
+    
+    .tab{
+      padding:12px 20px;
+      border-radius:10px;
+      background: rgba(30, 30, 63, 0.6);
+      backdrop-filter: blur(10px);
+      cursor:pointer;
+      color: var(--text-dim);
+      font-weight:600;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      border: 1px solid transparent;
+      position: relative;
+    }
+    
+    .tab::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      width: 0;
+      height: 2px;
+      background: var(--accent);
+      transform: translateX(-50%);
+      transition: width 0.3s ease;
+    }
+    
+    .tab:hover {
+      background: var(--panel-hover);
+      transform: translateY(-2px);
+    }
+    
+    .tab.active{
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-secondary) 100%);
+      color: white;
+      border-color: var(--accent);
+      box-shadow: 0 4px 15px var(--accent-glow);
+    }
+    
+    .tab.active::after {
+      width: 80%;
+    }
+    
+    .editor-wrap{
+      flex:1;
+      display:flex;
+      flex-direction:column;
+      background: rgba(30, 30, 63, 0.6);
+      backdrop-filter: blur(10px);
+      border-radius:12px;
+      overflow:hidden;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      animation: scaleIn 0.5s ease-out 0.7s both;
+    }
+    
+    @keyframes scaleIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    
+    #monaco-editor{flex:1; min-height: 400px;}
+    
+    .output{
+      padding:16px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      min-height:140px;
+      background: rgba(15, 15, 35, 0.8);
+      color: var(--text);
+    }
+    
+    .metrics{
+      display:flex;
+      gap:12px;
+      margin-top:12px;
+    }
+    
+    .metric{
+      flex:1;
+      padding:14px;
+      border-radius:10px;
+      background: linear-gradient(135deg, rgba(0, 212, 255, 0.2) 0%, rgba(124, 58, 237, 0.2) 100%);
+      border: 1px solid rgba(0, 212, 255, 0.3);
+      color: var(--text);
+      font-weight:700;
+      text-align:center;
+      font-size: 14px;
+      transition: all 0.3s ease;
+      animation: slideUp 0.5s ease-out both;
+    }
+    
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .metric:nth-child(1) { animation-delay: 0.8s; }
+    .metric:nth-child(2) { animation-delay: 0.9s; }
+    
+    .metric:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px var(--accent-glow);
+    }
+    
+    .run-row{
+      display:flex;
+      gap:12px;
+      align-items:center;
+    }
+    
+    .langs{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      max-height:200px;
+      overflow-y:auto;
+      padding-right:8px;
+    }
+    
+    .langs::-webkit-scrollbar {
+      width: 6px;
+    }
+    
+    .langs::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 3px;
+    }
+    
+    .langs::-webkit-scrollbar-thumb {
+      background: var(--accent);
+      border-radius: 3px;
+    }
+    
+    .lang-item{
+      padding:10px 14px;
+      border-radius:8px;
+      cursor:pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      border: 1px solid transparent;
+      font-size: 14px;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .lang-item::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 100%;
+      width: 3px;
+      background: var(--accent);
+      transform: scaleY(0);
+      transition: transform 0.3s ease;
+    }
+    
+    .lang-item:hover{
+      background: var(--panel-hover);
+      transform: translateX(4px);
+      border-color: rgba(0, 212, 255, 0.3);
+    }
+    
+    .lang-item:hover::before {
+      transform: scaleY(1);
+    }
+    
+    .lang-item.active{
+      background: linear-gradient(135deg, rgba(0, 212, 255, 0.2) 0%, rgba(124, 58, 237, 0.2) 100%);
+      border-color: var(--accent);
+      color: var(--accent);
+      font-weight:700;
+      box-shadow: 0 0 20px var(--accent-glow);
+    }
+    
+    .lang-item.active::before {
+      transform: scaleY(1);
+    }
+    
+    .modal-backdrop{
+      position:fixed;
+      inset:0;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(5px);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      z-index:999;
+      animation: fadeIn 0.3s ease-out;
+    }
+    
+    .modal{
+      background: rgba(30, 30, 63, 0.95);
+      backdrop-filter: blur(20px);
+      padding:28px;
+      border-radius:16px;
+      min-width:360px;
+      color: var(--text);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      display:flex;
+      flex-direction:column;
+      gap:16px;
+      animation: modalSlide 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    @keyframes modalSlide {
+      from { opacity: 0; transform: translateY(-30px) scale(0.9); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    
+    .input{
+      width:100%;
+      padding:12px;
+      border-radius:8px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: rgba(15, 15, 35, 0.8);
+      color: var(--text);
+      font-size: 14px;
+      transition: all 0.3s ease;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    
+    .input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+    
+    .small{
+      font-size:13px;
+      color: var(--text-dim);
+    }
+    
+    .opt-code{
+      height:100%;
+      min-height: 400px;
+      overflow:auto;
+      background: rgba(30, 30, 63, 0.6);
+      backdrop-filter: blur(10px);
+      padding:20px;
+      border-radius:12px;
+      border: 1px solid rgba(0, 212, 255, 0.3);
+      color: var(--text);
+      font-family:'JetBrains Mono', monospace;
+      font-size: 14px;
+      line-height: 1.6;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    }
+    
+    .section-title {
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 10px;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    
+    #roomInfo {
+      padding: 12px;
+      background: rgba(15, 15, 35, 0.8);
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      transition: all 0.3s ease;
+    }
+    
+    #roomInfo:hover {
+      border-color: var(--accent);
+    }
+    
+    @media(max-width:900px){
+      main{flex-direction:column}
+      .sidebar{width:100%}
+      header{padding: 12px 16px;}
+      .title{font-size: 20px;}
+    }
+    
+    /* Code running status animations */
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    
+    .running #status {
+      animation: pulse 1s ease-in-out infinite;
+      color: var(--warning);
+    }
+    
+    .success #status {
+      color: var(--success);
+    }
+    
+    .error #status {
+      color: var(--error);
     }
   </style>
+  <script>window.MonacoBaseURL = 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.33.0/min/';</script>
 </head>
-
 <body>
-  <h1>OptiCollab Editor 🧠</h1>
+  <div class="app">
+    <header>
+      <div style="display:flex;align-items:center;gap:12px">
+        <div class="title">⚡ OptiCollab Editor</div>
+      </div>
+      <div class="controls">
+        <button class="btn" id="createRoomBtn">Create Room</button>
+        <button class="btn" id="joinRoomBtn">Join Room</button>
+      </div>
+    </header>
 
-  <label for="language-select">Language:</label>
-  <select id="language-select">
-    <option value="javascript">JavaScript</option>
-    <option value="python">Python</option>
-    <option value="go">Go</option>
-    <option value="html">HTML</option>
-    <option value="cpp">C++</option>
-  </select>
+    <main>
+      <aside class="sidebar">
+        <div class="section-title">🎨 Language</div>
+        <div class="langs" id="langList">
+          <div class="lang-item active" data-lang="python">Python</div>
+          <div class="lang-item" data-lang="javascript">JavaScript</div>
+          <div class="lang-item" data-lang="cpp">C++</div>
+          <div class="lang-item" data-lang="java">Java</div>
+          <div class="lang-item" data-lang="go">Go</div>
+        </div>
 
-  <div id="editor"></div>
+        <div class="section-title" style="margin-top:8px">⚙️ Actions</div>
+        <div style="margin-top:8px;display:flex;gap:10px;flex-direction:column">
+          <div class="run-row">
+            <button class="btn" id="runCodeBtn">▶ Run</button>
+            <select id="runMode" class="input" style="width:120px;padding:8px">
+              <option value="sandbox">Sandbox (JS)</option>
+              <option value="simulate">Simulate</option>
+            </select>
+          </div>
+          <button class="btn" id="optimizeBtn">✨ Optimize</button>
+        </div>
 
-  <button id="run-btn">Run Code</button>
+        <div class="section-title" style="margin-top:8px">🌐 Room</div>
+        <div id="roomInfo" class="small">Not in a room</div>
+      </aside>
 
-  <!-- Load your JS here -->
-  <script src="/opti-collab/static/js/index.js"></script>
+      <section class="center">
+        <div class="tabs">
+          <div class="tab active" data-tab="edit">📝 Editor</div>
+          <div class="tab" data-tab="opt">⚡ Optimized Code</div>
+        </div>
+
+        <div class="editor-wrap" id="editorPage">
+          <div id="monaco-editor"></div>
+          <div class="output">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <div><strong id="status">Ready</strong> <span class="small" id="errMsg"></span></div>
+              <div class="small">💬 Output / Errors</div>
+            </div>
+            <pre id="console" style="white-space:pre-wrap;margin-top:12px;font-family:'JetBrains Mono',monospace;font-size:13px"></pre>
+            <div class="metrics">
+              <div class="metric" id="mem">💾 Memory: --</div>
+              <div class="metric" id="cpu">⚡ CPU: --</div>
+            </div>
+          </div>
+        </div>
+
+        <div id="optPage" style="display:none">
+          <div class="section-title">⚡ Optimized Code (Simulated)</div>
+          <div class="opt-code" id="optCode">Run Optimize to see result here.</div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="modal-backdrop" id="roomModal">
+    <div class="modal" id="modalContent">
+      <div id="modalTitle" class="section-title"></div>
+      <input type="text" id="roomIdInput" class="input" placeholder="Enter Room ID">
+      <button class="btn" id="modalActionBtn"></button>
+      <button class="btn" id="closeModalBtn" style="background:rgba(239,68,68,0.2);border:1px solid #ef4444">Cancel</button>
+    </div>
+  </div>
+
+  <script>
+    // API endpoints
+    const RUN_CODE_ENDPOINT = "http://localhost:8989/opti-collab/run-code";
+    const OPTIMIZE_CODE_ENDPOINT = "http://localhost:8989/opti-collab/optimise-code";
+
+    // UI elements
+    const tabs = document.querySelectorAll('.tab');
+    const editorPage = document.getElementById('editorPage');
+    const optPage = document.getElementById('optPage');
+    const langItems = document.querySelectorAll('.lang-item');
+    const roomModal = document.getElementById('roomModal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalActionBtn = document.getElementById('modalActionBtn');
+    const roomIdInput = document.getElementById('roomIdInput');
+    const closeModalBtn = document.getElementById('closeModalBtn');
+    const roomInfo = document.getElementById('roomInfo');
+    const runCodeBtn = document.getElementById('runCodeBtn');
+    const optimizeBtn = document.getElementById('optimizeBtn');
+    const consoleOutput = document.getElementById('console');
+    const statusElement = document.getElementById('status');
+    const errMsgElement = document.getElementById('errMsg');
+    const memElement = document.getElementById('mem');
+    const cpuElement = document.getElementById('cpu');
+    const optCodeElement = document.getElementById('optCode');
+
+    // Tab switching
+    tabs.forEach(t => t.addEventListener('click', () => {
+      tabs.forEach(x => x.classList.remove('active'));
+      t.classList.add('active');
+      if (t.dataset.tab === 'edit') {
+        editorPage.style.display = 'flex';
+        optPage.style.display = 'none';
+      } else {
+        editorPage.style.display = 'none';
+        optPage.style.display = 'block';
+      }
+    }));
+
+    // Monaco Editor initialization
+    (function loadMonaco() {
+      const loader = document.createElement('script');
+      loader.src = window.MonacoBaseURL + 'vs/loader.js';
+      loader.onload = () => {
+        require.config({ paths: { 'vs': window.MonacoBaseURL + 'vs' } });
+        require(['vs/editor/editor.main'], function () {
+          window.editor = monaco.editor.create(document.getElementById('monaco-editor'), {
+            value: `# Welcome to OptiCollab - Enter your code here`,
+            language: 'python',
+            theme: 'vs-dark',
+            automaticLayout: true,
+            fontSize: 20
+            ,
+            fontFamily: 'JetBrains Mono, monospace',
+            lineHeight: 22,
+            padding: { top: 16 }
+          });
+        });
+      };
+      document.head.appendChild(loader);
+    })();
+
+    // Language selection
+    langItems.forEach(item => {
+      item.addEventListener('click', () => {
+        langItems.forEach(x => x.classList.remove('active'));
+        item.classList.add('active');
+        const lang = item.dataset.lang;
+        if (window.editor) {
+          let monacoLang = 'plaintext';
+          if (lang === 'javascript') monacoLang = 'javascript';
+          else if (lang === 'python') monacoLang = 'python';
+          else if (lang === 'cpp') monacoLang = 'cpp';
+          else if (lang === 'java') monacoLang = 'java';
+          else if (lang === 'go') monacoLang = 'go';
+          monaco.editor.setModelLanguage(window.editor.getModel(), monacoLang);
+        }
+      });
+    });
+
+    // Room creation and joining
+    document.getElementById('createRoomBtn').addEventListener('click', () => {
+      modalTitle.textContent = '🚀 Create Room';
+      modalActionBtn.textContent = 'Create Room';
+      roomModal.style.display = 'flex';
+      modalActionBtn.onclick = () => {
+        if (roomIdInput.value.trim()) {
+          roomInfo.textContent = '🌐 Room: ' + roomIdInput.value;
+          roomModal.style.display = 'none';
+          roomIdInput.value = '';
+        }
+      };
+    });
+
+    document.getElementById('joinRoomBtn').addEventListener('click', () => {
+      modalTitle.textContent = '🔗 Join Room';
+      modalActionBtn.textContent = 'Join Room';
+      roomModal.style.display = 'flex';
+      modalActionBtn.onclick = () => {
+        if (roomIdInput.value.trim()) {
+          roomInfo.textContent = '🌐 Room: ' + roomIdInput.value;
+          roomModal.style.display = 'none';
+          roomIdInput.value = '';
+        }
+      };
+    });
+
+    closeModalBtn.addEventListener('click', () => {
+      roomModal.style.display = 'none';
+      roomIdInput.value = '';
+    });
+
+    // Run code functionality
+    runCodeBtn.addEventListener('click', async () => {
+      const output = document.querySelector('.output');
+      output.className = 'output running';
+      statusElement.textContent = 'Running...';
+      consoleOutput.textContent = '';
+      errMsgElement.textContent = '';
+      
+      const activeLang = document.querySelector('.lang-item.active').dataset.lang;
+      const code = window.editor.getValue();
+      
+      try {
+        const response = await fetch(RUN_CODE_ENDPOINT, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            lang: activeLang,
+            code: code
+          })
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        output.className = 'output success';
+        statusElement.textContent = 'Success';
+        consoleOutput.textContent = data.output || 'No output';
+        
+        // Update metrics if available
+        if (data.memory_usage) {
+          memElement.textContent = `💾 Memory: ${data.memory_usage}`;
+        }
+        if (data.cpu_performance) {
+          cpuElement.textContent = `⚡ CPU: ${data.cpu_performance}`;
+        }
+        
+      } catch (error) {
+        output.className = 'output error';
+        statusElement.textContent = 'Error';
+        errMsgElement.textContent = error.message;
+        consoleOutput.textContent = 'Failed to execute code. Please try again.';
+        console.error('Error running code:', error);
+      }
+    });
+
+    // Optimize code functionality
+    optimizeBtn.addEventListener('click', async () => {
+      const output = document.querySelector('.output');
+      output.className = 'output running';
+      statusElement.textContent = 'Optimizing...';
+      consoleOutput.textContent = '';
+      errMsgElement.textContent = '';
+      
+      const activeLang = document.querySelector('.lang-item.active').dataset.lang;
+      const code = window.editor.getValue();
+      
+      try {
+        const response = await fetch(OPTIMIZE_CODE_ENDPOINT, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            lang: activeLang,
+            code: code
+          })
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        output.className = 'output success';
+        statusElement.textContent = 'Optimized';
+        
+        // Update metrics
+        if (data.memory_usage) {
+          memElement.textContent = `💾 Memory: ${data.memory_usage}`;
+        }
+        if (data.cpu_performance) {
+          cpuElement.textContent = `⚡ CPU: ${data.cpu_performance}`;
+        }
+        
+        // Display optimization results
+        let optimizationHTML = '';
+        
+        if (data.code_optimization_level) {
+          optimizationHTML += `<div style="color:#10b981;margin-bottom:12px">✅ Optimization Level: ${data.code_optimization_level}%</div>`;
+        }
+        
+        if (data.redundant_block || data.unused_variables || data.unused_functions) {
+          optimizationHTML += `<div style="color:#f59e0b;margin-bottom:12px">🔍 Issues Found:</div>`;
+          if (data.redundant_block) optimizationHTML += `<div>• Redundant blocks: ${data.redundant_block}</div>`;
+          if (data.unused_variables) optimizationHTML += `<div>• Unused variables: ${data.unused_variables}</div>`;
+          if (data.unused_functions) optimizationHTML += `<div>• Unused functions: ${data.unused_functions}</div>`;
+        }
+        
+        if (data.suggested_optimized_code) {
+          optimizationHTML += `<div style="margin-top:16px;color:#00d4ff">⚡ Optimized Code:</div>`;
+          optimizationHTML += `<pre style="background:rgba(0,0,0,0.3);padding:12px;border-radius:8px;margin-top:8px;overflow-x:auto">${escapeHtml(data.suggested_optimized_code)}</pre>`;
+        }
+        
+        if (data.output) {
+          optimizationHTML += `<div style="margin-top:16px;color:#e4e4e7">📊 Output:</div>`;
+          optimizationHTML += `<pre style="background:rgba(0,0,0,0.3);padding:12px;border-radius:8px;margin-top:8px">${escapeHtml(data.output)}</pre>`;
+        }
+        
+        optCodeElement.innerHTML = optimizationHTML || 'No optimization suggestions available.';
+        
+        // Switch to optimized code tab
+        tabs.forEach(x => x.classList.remove('active'));
+        document.querySelector('.tab[data-tab="opt"]').classList.add('active');
+        editorPage.style.display = 'none';
+        optPage.style.display = 'block';
+        
+      } catch (error) {
+        output.className = 'output error';
+        statusElement.textContent = 'Error';
+        errMsgElement.textContent = error.message;
+        consoleOutput.textContent = 'Failed to optimize code. Please try again.';
+        console.error('Error optimizing code:', error);
+      }
+    });
+
+    // Helper function to escape HTML
+    function escapeHtml(unsafe) {
+      return unsafe
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+  </script>
 </body>
 </html>

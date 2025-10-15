@@ -46,7 +46,7 @@ async function Send_code_to_server(code,lang){
   const response = await fetch("/opti-collab/run-code",{
     method : "POST",
     content:"application/json",
-    body : JSON.stringify({"code":code,"language":lang})
+    body : JSON.stringify({"code":code,"lang":lang})
   })
   const data =await response.json()
   console.log("data - ",data)
@@ -54,55 +54,55 @@ async function Send_code_to_server(code,lang){
 }
 
 
-// document.addEventListener("DOMContentLoaded", function () {
-//   require.config({
-//     paths: { 'vs': 'https://cdn.jsdelivr.net/npm/monaco-editor@0.38.0/min/vs' }
-//   });
+document.addEventListener("DOMContentLoaded", function () {
+  require.config({
+    paths: { 'vs': 'https://cdn.jsdelivr.net/npm/monaco-editor@0.38.0/min/vs' }
+  });
 
-//   require(['vs/editor/editor.main'], function () {
-//     const editor = monaco.editor.create(document.getElementById('editor'), {
-//       value: `// Start coding here...\n`,
-//       language: 'javascript',
-//       theme: 'vs-dark',
-//       automaticLayout: true
-//     });
-
-
-//     // Connect WebSocket
-//   //   const roomId = prompt("Enter Room ID") || "default";
-//   //   const ws = new WebSocket(`ws://localhost:8989/opti-collab/ws?room=${roomId}`);
-
-//   //   ws.onopen = () => console.log("✅ Connected to WebSocket room:", roomId);
-
-//   //   let suppress = false;
-
-//   //   ws.onmessage = (event) => {
-//   //     const data = event.data;
-//   //     if (editor.getValue() !== data) {
-//   //       suppress = true;
-//   //       editor.setValue(data);
-//   //       suppress = false;
-//   //     }
-//   //   };
-
-//   //   editor.onDidChangeModelContent(() => {
-//   //     if (!suppress) {
-//   //       ws.send(editor.getValue());
-//   //     }
-//   //   });
-
-//   //   // Dynamic language switching
-//   //   document.getElementById("language-select").addEventListener("change", (e) => {
-//   //     const lang = e.target.value;
-//   //     monaco.editor.setModelLanguage(editor.getModel(), lang);
-//   //   });
-//   });
-// });
+  require(['vs/editor/editor.main'], function () {
+    const editor = monaco.editor.create(document.getElementById('editor'), {
+      value: `// Start coding here...\n`,
+      language: 'javascript',
+      theme: 'vs-dark',
+      automaticLayout: true
+    });
 
 
-// function Run_code(){
-//   const code=document.getElementById('editor').value
-//   console.log("code - ",code)
+    // Connect WebSocket
+    const roomId = prompt("Enter Room ID");
+    const ws = new WebSocket(`ws://localhost:8989/opti-collab/ws?room=${roomId}`);
 
-// }
+    ws.onopen = () => console.log("✅ Connected to WebSocket room:", roomId);
+
+    let suppress = false;
+
+    ws.onmessage = (event) => {
+      const data = event.data;
+      if (editor.getValue() !== data) {
+        suppress = true;
+        editor.setValue(data);
+        suppress = false;
+      }
+    };
+
+    editor.onDidChangeModelContent(() => {
+      if (!suppress) {
+        ws.send(editor.getValue());
+      }
+    });
+
+    // Dynamic language switching
+    document.getElementById("language-select").addEventListener("change", (e) => {
+      const lang = e.target.value;
+      monaco.editor.setModelLanguage(editor.getModel(), lang);
+    });
+  });
+});
+
+
+function Run_code(){
+  const code=document.getElementById('editor').value
+  console.log("code - ",code)
+
+}
 

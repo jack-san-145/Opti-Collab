@@ -15,5 +15,4 @@ func WriteJSON(w http.ResponseWriter, r *http.Request, data any) {
 		fmt.Println("error while encoding data - ", err)
 		return
 	}
-
 }

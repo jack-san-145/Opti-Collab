@@ -6,7 +6,6 @@ import (
 )
 
 func Run_code(language, code string) (string, error) {
-	// Map language to container & file info
 	var containerName, fileName, runCmd string
 
 	switch language {
@@ -38,13 +37,25 @@ func Run_code(language, code string) (string, error) {
 		return "", fmt.Errorf("unsupported language: %s", language)
 	}
 
-	// Use cat <<EOF to write multi-line code inside container
-	cmdStr := fmt.Sprintf(`docker exec -i %s bash -c $'cat << EOF > %s
+	// Create the bash script: write code to file, then execute it
+	cmdStr := fmt.Sprintf(`docker exec -i %s bash -c $'cat << "EOF" > %s
 %s
 EOF
 %s'`, containerName, fileName, code, runCmd)
 
 	cmd := exec.Command("bash", "-c", cmdStr)
-	output, err := cmd.CombinedOutput()
-	return string(output), err
+	output, err := cmd.CombinedOutput() // captures both stdout + stderr
+
+	result := string(output)
+
+	// Log everything (optional for debugging)
+	fmt.Printf("\n[RunCode] Language: %s\nCommand: %s\nOutput:\n%s\n", language, cmdStr, result)
+
+	// Always return combined output; if error occurs, return it as well
+	if err != nil {
+		// Append the error message if execution failed (e.g. non-zero exit)
+		result += fmt.Sprintf("\n[error] %v", err)
+	}
+
+	return result, nil
 }

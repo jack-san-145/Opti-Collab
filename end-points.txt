@@ -2,21 +2,55 @@
 
 endpoint = "http://localhost:8989/opti-collab/run-code"
 
+method : post(body->json)
+
 frontend to backend : 
 {
-    "language" : "python",
-    "code" : `a=10
-              b=20
-              print("sum - ",a+b)
-              `
+    "lang": "python",
+    "code": "import math\n\ndef is_prime(n):\n    if n <= 1:\n        return False\n    if n == 2:\n        return True\n    if n % 2 == 0:  # Optimization: check for even numbers\n        return False\n    # Check for odd divisors up to the square root of n\n    for i in range(3, int(math.sqrt(n)) + 1, 2):\n        if n % i == 0:\n            return False\n    return True\n\n# Example usage:\nnumber_to_check = 29\nif is_prime(number_to_check):\n    print(f\"{number_to_check} is a prime number.\")\nelse:\n    print(f\"{number_to_check} is not a prime number.\")"
 }
+
 
 backend to frontend : 
 {
-    "code_optimization_level" : 50,
-    "cpu_performance":1.2ms,
-    "memory_usage":1.4kb,
-    "error":null,
-    "output":"hello world",
-    "suggested_optimized_code":"print(f"sum - {10 + 20}")"
+    "output": "29 is a prime number.\n"
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+2.optimise code :
+
+endpoint = "http://localhost:8989/opti-collab/optimise-code"
+method : post(body->json)
+
+frontend to backend : 
+{
+    "lang": "python",
+    "code": "import math\n\ndef is_prime(n):\n    if n <= 1:\n        return False\n    if n == 2:\n        return True\n    if n % 2 == 0:  # Optimization: check for even numbers\n        return False\n    # Check for odd divisors up to the square root of n\n    for i in range(3, int(math.sqrt(n)) + 1, 2):\n        if n % i == 0:\n            return False\n    return True\n\n# Example usage:\nnumber_to_check = 29\nif is_prime(number_to_check):\n    print(f\"{number_to_check} is a prime number.\")\nelse:\n    print(f\"{number_to_check} is not a prime number.\")"
+}
+
+
+backend to frontend : 
+{
+    "code_optimization_level": 90,
+    "cpu_performance": "0.05ms",
+    "memory_usage": "3kb",
+    "error": null,
+    "output": "29 is a prime number.\n",
+    "redundant_block": null,
+    "unused_variables": null,
+    "unused_functions": null,
+    "suggested_optimized_code": "import math\n\ndef is_prime(n):\n    if n <= 1:\n        return False\n    if n == 2:\n        return True\n    if n % 2 == 0:  # Optimization: check for even numbers\n        return False\n    # Check for odd divisors up to the square root of n\n    for i in range(3, int(math.sqrt(n)) + 1, 2):\n        if n % i == 0:\n            return False\n    return True\n\n# Example usage:\nnumber_to_check = 29\nif is_prime(number_to_check):\n    print(f\"{number_to_check} is a prime number.\")\nelse:\n    print(f\"{number_to_check} is not a prime number.\")"
+}
+
+
