@@ -7,7 +7,19 @@ build:
 run: 
 	cd cmd/server && ./opti-collab
 
+container-up:
+	docker start python-container
+	docker start go-container
+	docker start js-container
+	docker start gcc-container
+	docker start java-container
 
+container-down:
+	docker stop python-container
+	docker stop go-container
+	docker stop js-container
+	docker stop gcc-container
+	docker stop java-container
 
 #to automate the git push
 push:
